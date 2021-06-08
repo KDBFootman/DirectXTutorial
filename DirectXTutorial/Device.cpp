@@ -1,8 +1,6 @@
 
 #include "Device.h"
 
-#define SAFE_RELEASE(p) {	if(p) {	(p)->Release();	(p) = nullptr;	}	}
-
 
 //--------------------------------------------------------------------------------------
 Device::Device(DXGI_FORMAT backBufferFormat,UINT backBufferCount,D3D_FEATURE_LEVEL minFeatureLevel, bool vSync)
