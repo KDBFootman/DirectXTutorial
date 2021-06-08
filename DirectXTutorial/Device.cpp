@@ -22,7 +22,6 @@ Device::Device(DXGI_FORMAT backBufferFormat,UINT backBufferCount,D3D_FEATURE_LEV
 }
 
 
-//--------------------------------------------------------------------------------------
 Device::~Device() {
 	DeleteDevice();
 }
@@ -32,7 +31,7 @@ Device::~Device() {
 void Device::SetWindow(HWND window, int width, int height) {
 
 	m_hWnd = window;
-	m_ScreenViewport = CD3D11_VIEWPORT(0.0f, 0.0f, static_cast<FLOAT>(width), static_cast<FLOAT>(height));
+	m_ScreenViewport = CD3D11_VIEWPORT(0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height));
 }
 
 
@@ -82,7 +81,7 @@ HRESULT Device::CreateDevice() {
 	sd.BufferCount = m_BackBufferCount;
 	sd.OutputWindow = m_hWnd;
 	sd.Windowed = TRUE;
-	sd.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+	sd.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
 	if (m_VSync) {
 		sd.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 	}
@@ -92,7 +91,7 @@ HRESULT Device::CreateDevice() {
 
 	for (auto& driverType : driverTypes) {
 		m_DriverType = driverType;
-		hr = D3D11CreateDeviceAndSwapChain(nullptr, m_DriverType, nullptr, createDeviceFlags, featureLevels, featureLevelCount, D3D11_SDK_VERSION, &sd, &m_SwapChain, &m_D3DDevice, &m_MinFeatureLevel, &m_D3DDeviceContext);
+		hr = D3D11CreateDeviceAndSwapChain(nullptr, m_DriverType, nullptr, createDeviceFlags, featureLevels, featureLevelCount, D3D11_SDK_VERSION, &sd, &m_SwapChain, &m_D3DDevice, &m_FeatureLevel, &m_D3DDeviceContext);
 		if (SUCCEEDED(hr)) {
 			break;
 		}
