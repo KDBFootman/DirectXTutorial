@@ -22,6 +22,11 @@ Device::Device(DXGI_FORMAT backBufferFormat,UINT backBufferCount,D3D_FEATURE_LEV
 }
 
 
+Device::~Device() {
+	DeleteDevice();
+}
+
+
 //--------------------------------------------------------------------------------------
 void Device::SetWindow(HWND window, int width, int height) {
 
@@ -86,7 +91,7 @@ HRESULT Device::CreateDevice() {
 
 	for (auto& driverType : driverTypes) {
 		m_DriverType = driverType;
-		hr = D3D11CreateDeviceAndSwapChain(nullptr, m_DriverType, nullptr, createDeviceFlags, featureLevels, featureLevelCount, D3D11_SDK_VERSION, &sd, m_SwapChain.ReleaseAndGetAddressOf(), m_D3DDevice.ReleaseAndGetAddressOf(), &m_FeatureLevel, m_D3DDeviceContext.ReleaseAndGetAddressOf());
+		hr = D3D11CreateDeviceAndSwapChain(nullptr, m_DriverType, nullptr, createDeviceFlags, featureLevels, featureLevelCount, D3D11_SDK_VERSION, &sd, &m_SwapChain, &m_D3DDevice, &m_FeatureLevel, &m_D3DDeviceContext);
 		if (SUCCEEDED(hr)) {
 			break;
 		}
@@ -96,14 +101,14 @@ HRESULT Device::CreateDevice() {
 	}
 
 	// Create a render target view
-	Microsoft::WRL::ComPtr<ID3D11Texture2D> pBackBuffer = nullptr;
-	hr = m_SwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)pBackBuffer.ReleaseAndGetAddressOf());
+	ID3D11Texture2D* pBackBuffer = nullptr;
+	hr = m_SwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&pBackBuffer);
 	if (FAILED(hr)) {
 		return hr;
 	}
 
-	hr = m_D3DDevice->CreateRenderTargetView(pBackBuffer.Get(), nullptr, m_RenderTargetView.ReleaseAndGetAddressOf());
-	pBackBuffer.Reset();
+	hr = m_D3DDevice->CreateRenderTargetView(pBackBuffer, nullptr, &m_RenderTargetView);
+	pBackBuffer->Release();
 	if (FAILED(hr)) {
 		return hr;
 	}
@@ -121,4 +126,14 @@ void Device::Present() {
 	else {
 		m_SwapChain->Present(0, DXGI_PRESENT_ALLOW_TEARING);
 	}
+}
+
+
+//--------------------------------------------------------------------------------------
+void Device::DeleteDevice() {
+
+	SAFE_RELEASE(m_RenderTargetView);
+	SAFE_RELEASE(m_SwapChain);
+	SAFE_RELEASE(m_D3DDeviceContext);
+	SAFE_RELEASE(m_D3DDevice);
 }
