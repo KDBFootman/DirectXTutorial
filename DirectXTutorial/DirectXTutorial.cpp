@@ -1,18 +1,28 @@
+
 #include <windows.h>
+#include <memory>
+
+#include "Device.h"
 
 
 //--------------------------------------------------------------------------------------
 // Global Variables
 //--------------------------------------------------------------------------------------
-HINSTANCE g_hInst = nullptr;
-HWND g_hWnd = nullptr;
+HINSTANCE				g_hInst = nullptr;
+HWND					g_hWnd = nullptr;
 
+std::unique_ptr<Device>	g_Device;
 
 //--------------------------------------------------------------------------------------
 // Forward declarations
 //--------------------------------------------------------------------------------------
 HRESULT InitWindow(HINSTANCE, int);
+HRESULT InitDevice();
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
+void Move();
+void Render();
+void Clear();
+void CleanupDevice();
 
 
 //--------------------------------------------------------------------------------------
@@ -28,11 +38,29 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 		return 0;
 	}
 
-	MSG msg = {};
-	while (GetMessage(&msg, nullptr, 0, 0)) {
-		TranslateMessage(&msg);
-		DispatchMessage(&msg);
+	g_Device = std::make_unique<Device>();
+
+	if (FAILED(InitDevice())) {
+		CleanupDevice();
+		g_Device.reset();
+		return 0;
 	}
+
+	MSG msg = {};
+	while (msg.message != WM_QUIT) {
+
+		if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
+		else {
+			Move();
+			Render();
+		}
+	}
+
+	CleanupDevice();
+	g_Device.reset();
 
 	return (int)msg.wParam;
 }
@@ -81,12 +109,35 @@ HRESULT InitWindow(HINSTANCE hInstance, int nCmdShow) {
 
 
 //--------------------------------------------------------------------------------------
+// Create Direct3D device and swap chain
+//--------------------------------------------------------------------------------------
+HRESULT InitDevice() {
+
+	HRESULT hr = S_OK;
+
+	RECT rc = {};
+	GetClientRect(g_hWnd, &rc);
+	UINT width = rc.right - rc.left;
+	UINT height = rc.bottom - rc.top;
+
+	g_Device->SetWindow(g_hWnd, width, height);
+
+	hr = g_Device->CreateDevice();
+	if (FAILED(hr)) {
+		return hr;
+	}
+
+	return S_OK;
+}
+
+
+//--------------------------------------------------------------------------------------
 // Called every time the application receives a message
 //--------------------------------------------------------------------------------------
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
 
-	PAINTSTRUCT ps;
-	HDC hdc;
+	PAINTSTRUCT ps = {};
+	HDC hdc = nullptr;
 
 	switch (message) {
 
@@ -104,4 +155,52 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
 	}
 
 	return 0;
+}
+
+
+//--------------------------------------------------------------------------------------
+// Move the frame
+//--------------------------------------------------------------------------------------
+void Move() {
+
+}
+
+
+//--------------------------------------------------------------------------------------
+// Render the frame
+//--------------------------------------------------------------------------------------
+void Render() {
+
+	Clear();
+
+	g_Device->Present();
+}
+
+
+//--------------------------------------------------------------------------------------
+// Just clear the backbuffer
+//--------------------------------------------------------------------------------------
+void Clear() {
+
+	auto context = g_Device->GetD3DDeviceContext();
+	auto renderTarget = g_Device->GetRenderTargetView();
+
+	float ClearColor[4] = { 0.0f,0.125f,0.3f,1.0f };
+	context->ClearRenderTargetView(renderTarget, ClearColor);
+	context->OMSetRenderTargets(1, &renderTarget, nullptr);
+
+	// Set the viewport
+	auto viewport = g_Device->GetScreenViewport();
+	context->RSSetViewports(1, &viewport);
+}
+
+
+//--------------------------------------------------------------------------------------
+// Clean up the objects we've created
+//--------------------------------------------------------------------------------------
+void CleanupDevice() {
+
+	auto context = g_Device->GetD3DDeviceContext();
+	context->ClearState();
+
 }
