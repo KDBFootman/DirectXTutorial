@@ -143,7 +143,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Device.cpp" />
     <ClCompile Include="DirectXTutorial.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Device.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
