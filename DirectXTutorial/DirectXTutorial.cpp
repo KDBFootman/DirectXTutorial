@@ -1,5 +1,6 @@
 
 #include <windows.h>
+#include <memory>
 
 #include "Device.h"
 
@@ -7,10 +8,10 @@
 //--------------------------------------------------------------------------------------
 // Global Variables
 //--------------------------------------------------------------------------------------
-HINSTANCE	g_hInst = nullptr;
-HWND		g_hWnd = nullptr;
+HINSTANCE				g_hInst = nullptr;
+HWND					g_hWnd = nullptr;
 
-Device*		g_Device = nullptr;
+std::unique_ptr<Device>	g_Device;
 
 //--------------------------------------------------------------------------------------
 // Forward declarations
@@ -37,11 +38,11 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 		return 0;
 	}
 
-	g_Device = new Device();
+	g_Device = std::make_unique<Device>();
 
 	if (FAILED(InitDevice())) {
 		CleanupDevice();
-		delete g_Device;
+		g_Device.reset();
 		return 0;
 	}
 
@@ -59,7 +60,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 	}
 
 	CleanupDevice();
-	delete	g_Device;
+	g_Device.reset();
 
 	return (int)msg.wParam;
 }
@@ -202,5 +203,4 @@ void CleanupDevice() {
 	auto context = g_Device->GetD3DDeviceContext();
 	context->ClearState();
 
-	g_Device->DeleteDevice();
 }
