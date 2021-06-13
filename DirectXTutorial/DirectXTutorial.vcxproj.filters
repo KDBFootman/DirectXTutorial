@@ -10,10 +10,12 @@
     <ClCompile Include="Device.cpp" />
     <ClCompile Include="DirectXTutorial.cpp" />
     <ClCompile Include="Shader.cpp" />
+    <ClCompile Include="Model.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Device.h" />
     <ClInclude Include="Shader.h" />
+    <ClInclude Include="Model.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Tutorial.hlsli" />

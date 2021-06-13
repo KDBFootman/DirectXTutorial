@@ -1,21 +1,10 @@
 
 #include <windows.h>
 #include <memory>
-#include <d3dcompiler.h>
-#include <DirectXMath.h>
 
 #include "Device.h"
 #include "Shader.h"
-
-using namespace DirectX;
-
-//--------------------------------------------------------------------------------------
-// Structures
-//--------------------------------------------------------------------------------------
-struct SimpleVertex
-{
-	XMFLOAT3 Pos;
-};
+#include "Model.h"
 
 
 //--------------------------------------------------------------------------------------
@@ -24,10 +13,9 @@ struct SimpleVertex
 HINSTANCE				g_hInst = nullptr;
 HWND					g_hWnd = nullptr;
 
-Microsoft::WRL::ComPtr<ID3D11Buffer> g_VertexBuffer = nullptr;
-
 std::unique_ptr<Device>	g_Device;
 std::unique_ptr<Shader> g_Shader;
+std::unique_ptr<Model> g_Model;
 
 //--------------------------------------------------------------------------------------
 // Forward declarations
@@ -55,8 +43,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 	}
 
 	g_Device = std::make_unique<Device>();
-	g_Shader = std::make_unique<Shader>();
-
+	
 	if (FAILED(InitDevice())) {
 		CleanupDevice();
 		g_Device.reset();
@@ -144,35 +131,17 @@ HRESULT InitDevice() {
 		return hr;
 	}
 
-	g_Shader->CreateShader(g_Device->GetD3DDevice());
-
-	// Create the vertex buffer
-	SimpleVertex vertices[] =
-	{
-		XMFLOAT3(0.0f,0.5f,0.5f),
-		XMFLOAT3(0.5f,-0.5f,0.5f),
-		XMFLOAT3(-0.5f,-0.5f,0.5f),
-	};
-	D3D11_BUFFER_DESC bd = {};
-	bd.Usage = D3D11_USAGE_DEFAULT;
-	bd.ByteWidth = sizeof(SimpleVertex) * 3;
-	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	bd.CPUAccessFlags = 0;
-	D3D11_SUBRESOURCE_DATA InitData = {};
-	InitData.pSysMem = vertices;
-
-	hr = g_Device->GetD3DDevice()->CreateBuffer(&bd, &InitData, g_VertexBuffer.ReleaseAndGetAddressOf());
+	g_Shader = std::make_unique<Shader>();
+	hr = g_Shader->CreateShader(g_Device->GetD3DDevice());
 	if (FAILED(hr)) {
 		return hr;
 	}
 
-	// Set vertex buffer
-	//UINT stride = sizeof(SimpleVertex);
-	//UINT offset = 0;
-	//g_Device->GetD3DDeviceContext()->IASetVertexBuffers(0, 1, g_VertexBuffer.GetAddressOf(), &stride, &offset);
-
-	// Set primitive topology
-	//g_Device->GetD3DDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	g_Model = std::make_unique<Model>();
+	hr = g_Model->CreateBuffer(g_Device->GetD3DDevice());
+	if (FAILED(hr)) {
+		return hr;
+	}
 
 	return S_OK;
 }
@@ -222,16 +191,7 @@ void Render() {
 
 	g_Shader->SetRenderShader(g_Device->GetD3DDeviceContext());
 
-	// Set vertex buffer
-	UINT stride = sizeof(SimpleVertex);
-	UINT offset = 0;
-	g_Device->GetD3DDeviceContext()->IASetVertexBuffers(0, 1, g_VertexBuffer.GetAddressOf(), &stride, &offset);
-
-	// Set primitive topology
-	g_Device->GetD3DDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-	// Render a triangle
-	g_Device->GetD3DDeviceContext()->Draw(3, 0);
+	g_Model->RenderModel(g_Device->GetD3DDeviceContext());
 
 	g_Device->Present();
 }
@@ -263,6 +223,6 @@ void CleanupDevice() {
 	auto context = g_Device->GetD3DDeviceContext();
 	context->ClearState();
 
-	g_VertexBuffer.Reset();
+	g_Model.reset();
 	g_Shader.reset();
 }

@@ -145,10 +145,12 @@
   <ItemGroup>
     <ClCompile Include="Device.cpp" />
     <ClCompile Include="DirectXTutorial.cpp" />
+    <ClCompile Include="Model.cpp" />
     <ClCompile Include="Shader.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Device.h" />
+    <ClInclude Include="Model.h" />
     <ClInclude Include="Shader.h" />
   </ItemGroup>
   <ItemGroup>
