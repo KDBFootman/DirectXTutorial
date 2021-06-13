@@ -8,7 +8,8 @@ class Device {
 
 public:
 	Device(DXGI_FORMAT backBufferFormat = DXGI_FORMAT_R8G8B8A8_UNORM, UINT backBufferCount = 2, D3D_FEATURE_LEVEL minFeatureLevel = D3D_FEATURE_LEVEL_10_0, bool vSync = true);
-	
+	~Device() = default;
+
 	void SetWindow(HWND, int, int);
 	HRESULT CreateDevice();
 	void Present();
