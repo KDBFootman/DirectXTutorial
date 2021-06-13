@@ -6,12 +6,25 @@
 #include "Shader.h"
 #include "Model.h"
 
+#include <DirectXMath.h>
+struct ConstantBuffer
+{
+	DirectX::XMMATRIX mWorld;
+	DirectX::XMMATRIX mView;
+	DirectX::XMMATRIX mProjection;
+};
+
 
 //--------------------------------------------------------------------------------------
 // Global Variables
 //--------------------------------------------------------------------------------------
 HINSTANCE				g_hInst = nullptr;
 HWND					g_hWnd = nullptr;
+
+Microsoft::WRL::ComPtr<ID3D11Buffer> g_ConstantBuffer = nullptr;
+DirectX::XMMATRIX g_World;
+DirectX::XMMATRIX g_View;
+DirectX::XMMATRIX g_Projection;
 
 std::unique_ptr<Device>	g_Device;
 std::unique_ptr<Shader> g_Shader;
@@ -138,10 +151,34 @@ HRESULT InitDevice() {
 	}
 
 	g_Model = std::make_unique<Model>();
-	hr = g_Model->CreateBuffer(g_Device->GetD3DDevice());
+	hr = g_Model->CreateModel(g_Device->GetD3DDevice());
 	if (FAILED(hr)) {
 		return hr;
 	}
+
+	// Create the constant buffer
+	D3D11_BUFFER_DESC bd = {};
+	bd.Usage = D3D11_USAGE_DEFAULT;
+	bd.ByteWidth = sizeof(ConstantBuffer);
+	bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	bd.CPUAccessFlags = 0;
+	hr = g_Device->GetD3DDevice()->CreateBuffer(&bd, nullptr, g_ConstantBuffer.ReleaseAndGetAddressOf());
+	if (FAILED(hr)) {
+		return hr;
+	}
+
+	// Initialize the world matrix
+	g_World = DirectX::XMMatrixIdentity();
+
+	// Initialize the view matrix
+	const auto Eye = DirectX::XMVectorSet(0.0f, 1.0f, -5.0f, 0.0f);
+	const auto At = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+	const auto Up = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+	g_View = DirectX::XMMatrixLookAtLH(Eye, At, Up);
+
+	// Initialize the projection matrix
+	const auto fov = DirectX::XM_PIDIV2;
+	g_Projection = DirectX::XMMatrixPerspectiveFovLH(fov, width / (FLOAT)height, 0.01f, 100.0f);
 
 	return S_OK;
 }
@@ -189,6 +226,15 @@ void Render() {
 
 	Clear();
 
+	// Update variables
+	ConstantBuffer cb = {};
+	cb.mWorld = DirectX::XMMatrixTranspose(g_World);
+	cb.mView = DirectX::XMMatrixTranspose(g_View);
+	cb.mProjection = DirectX::XMMatrixTranspose(g_Projection);
+	g_Device->GetD3DDeviceContext()->UpdateSubresource(g_ConstantBuffer.Get(), 0, nullptr, &cb, 0, 0);
+
+	g_Device->GetD3DDeviceContext()->VSSetConstantBuffers(0, 1, g_ConstantBuffer.GetAddressOf());
+
 	g_Shader->SetRenderShader(g_Device->GetD3DDeviceContext());
 
 	g_Model->RenderModel(g_Device->GetD3DDeviceContext());
@@ -222,6 +268,8 @@ void CleanupDevice() {
 
 	auto context = g_Device->GetD3DDeviceContext();
 	context->ClearState();
+
+	g_ConstantBuffer.Reset();
 
 	g_Model.reset();
 	g_Shader.reset();
