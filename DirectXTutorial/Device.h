@@ -14,6 +14,7 @@ public:
 	HRESULT CreateDevice();
 	void Present();
 	
+	D3D_DRIVER_TYPE GetD3DDriverType() { return m_DriverType; }
 	ID3D11Device* GetD3DDevice() const { return m_D3DDevice.Get(); }
 	ID3D11DeviceContext* GetD3DDeviceContext() const { return m_D3DDeviceContext.Get(); }
 	ID3D11RenderTargetView* GetRenderTargetView() const { return m_RenderTargetView.Get(); }

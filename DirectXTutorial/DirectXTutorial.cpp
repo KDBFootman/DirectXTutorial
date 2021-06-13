@@ -171,7 +171,7 @@ HRESULT InitDevice() {
 	g_World = DirectX::XMMatrixIdentity();
 
 	// Initialize the view matrix
-	const auto Eye = DirectX::XMVectorSet(0.0f, 1.0f, -5.0f, 0.0f);
+	const auto Eye = DirectX::XMVectorSet(0.0f, 1.5f, -5.0f, 0.0f);
 	const auto At = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 	const auto Up = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 	g_View = DirectX::XMMatrixLookAtLH(Eye, At, Up);
@@ -216,6 +216,22 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
 //--------------------------------------------------------------------------------------
 void Move() {
 
+	// Update our time
+	static float t = 0.0f;
+	if (g_Device->GetD3DDriverType() == D3D_DRIVER_TYPE_REFERENCE) {
+		t += (float)DirectX::XM_PI * 0.0125f;
+	}
+	else {
+		static DWORD dwTimeStart = 0;
+		DWORD dwTimeCur = GetTickCount64();
+		if (dwTimeStart == 0) {
+			dwTimeStart = dwTimeCur;
+		}
+		t = (float)(dwTimeCur - dwTimeStart) / 1000.0f;
+	}
+
+	// Animate the cube
+	g_World = DirectX::XMMatrixRotationY(t);
 }
 
 
