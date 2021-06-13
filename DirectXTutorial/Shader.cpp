@@ -73,11 +73,35 @@ HRESULT Shader::CreateShader(ID3D11Device* const device) {
 		return hr;
 	}
 
+#endif // !CompileShader
+
+#ifdef CompileShader
+
+	// Compile the vertex shader
+	Microsoft::WRL::ComPtr<ID3DBlob> vsBlob = nullptr;
+	hr = CompileShaderFromFile(L"Tutorial.hlsli", "VS", "vs_4_0", vsBlob.ReleaseAndGetAddressOf());
+	if (FAILED(hr)) {
+		MessageBox(nullptr, L"The FX file cannot be compiled. Please run this executable from the directory that contains the FX file.", L"Error", MB_OK);
+		return hr;
+	}
+
+	// Create the vertex shader
+	hr = device->CreateVertexShader(vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(), nullptr, m_VertexShader.ReleaseAndGetAddressOf());
+	if (FAILED(hr)) {
+		vsBlob.Reset();
+		return hr;
+	}
+
+#endif // CompileShader
+
 	// Define the input layout
 	D3D11_INPUT_ELEMENT_DESC layout[] =
 	{
-		{"POSITION",0,DXGI_FORMAT_R32G32B32_FLOAT,0,0,D3D11_INPUT_PER_VERTEX_DATA,0},
+		{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+		{"COLOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0},
 	};
+
+#ifndef CompileShader
 
 	// Create the input layout
 	hr = device->CreateInputLayout(layout, ARRAYSIZE(layout), vertexShaderBlob.data(), vertexShaderBlob.size(), m_VertexLayout.ReleaseAndGetAddressOf());
@@ -99,27 +123,6 @@ HRESULT Shader::CreateShader(ID3D11Device* const device) {
 #endif // !CompileShader
 
 #ifdef CompileShader
-
-	// Compile the vertex shader
-	Microsoft::WRL::ComPtr<ID3DBlob> vsBlob = nullptr;
-	hr = CompileShaderFromFile(L"Tutorial.hlsli", "VS", "vs_4_0", vsBlob.ReleaseAndGetAddressOf());
-	if (FAILED(hr)) {
-		MessageBox(nullptr, L"The FX file cannot be compiled. Please run this executable from the directory that contains the FX file.", L"Error", MB_OK);
-		return hr;
-	}
-
-	// Create the vertex shader
-	hr = device->CreateVertexShader(vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(), nullptr, m_VertexShader.ReleaseAndGetAddressOf());
-	if (FAILED(hr)) {
-		vsBlob.Reset();
-		return hr;
-	}
-
-	// Define the input layout
-	D3D11_INPUT_ELEMENT_DESC layout[] =
-	{
-		{"POSITION",0,DXGI_FORMAT_R32G32B32_FLOAT,0,0,D3D11_INPUT_PER_VERTEX_DATA,0},
-	};
 
 	// Create the input layout
 	hr = device->CreateInputLayout(layout, ARRAYSIZE(layout), vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(), m_VertexLayout.ReleaseAndGetAddressOf());
