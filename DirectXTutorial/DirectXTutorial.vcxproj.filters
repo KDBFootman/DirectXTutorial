@@ -13,4 +13,7 @@
   <ItemGroup>
     <ClInclude Include="Device.h" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Tutorial.hlsli" />
+  </ItemGroup>
 </Project>
