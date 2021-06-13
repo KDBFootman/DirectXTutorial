@@ -9,8 +9,20 @@
   <ItemGroup>
     <ClCompile Include="Device.cpp" />
     <ClCompile Include="DirectXTutorial.cpp" />
+    <ClCompile Include="Shader.cpp" />
+    <ClCompile Include="Model.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Device.h" />
+    <ClInclude Include="Shader.h" />
+    <ClInclude Include="Model.h" />
+    <ClInclude Include="ReadData.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Tutorial.hlsli" />
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="TutorialVS.hlsl" />
+    <FxCompile Include="TutorialPS.hlsl" />
   </ItemGroup>
 </Project>

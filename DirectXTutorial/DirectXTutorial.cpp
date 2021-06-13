@@ -3,6 +3,8 @@
 #include <memory>
 
 #include "Device.h"
+#include "Shader.h"
+#include "Model.h"
 
 
 //--------------------------------------------------------------------------------------
@@ -12,6 +14,8 @@ HINSTANCE				g_hInst = nullptr;
 HWND					g_hWnd = nullptr;
 
 std::unique_ptr<Device>	g_Device;
+std::unique_ptr<Shader> g_Shader;
+std::unique_ptr<Model> g_Model;
 
 //--------------------------------------------------------------------------------------
 // Forward declarations
@@ -29,7 +33,7 @@ void CleanupDevice();
 // Entry point to the program. Initializes everything and goes into a message processing
 // loop. Idle time is used to render the scene.
 //--------------------------------------------------------------------------------------
-int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow) {
+int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine, _In_ int nCmdShow) {
 
 	UNREFERENCED_PARAMETER(hPrevInstance);
 	UNREFERENCED_PARAMETER(lpCmdLine);
@@ -39,7 +43,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 	}
 
 	g_Device = std::make_unique<Device>();
-
+	
 	if (FAILED(InitDevice())) {
 		CleanupDevice();
 		g_Device.reset();
@@ -127,6 +131,18 @@ HRESULT InitDevice() {
 		return hr;
 	}
 
+	g_Shader = std::make_unique<Shader>();
+	hr = g_Shader->CreateShader(g_Device->GetD3DDevice());
+	if (FAILED(hr)) {
+		return hr;
+	}
+
+	g_Model = std::make_unique<Model>();
+	hr = g_Model->CreateBuffer(g_Device->GetD3DDevice());
+	if (FAILED(hr)) {
+		return hr;
+	}
+
 	return S_OK;
 }
 
@@ -173,6 +189,10 @@ void Render() {
 
 	Clear();
 
+	g_Shader->SetRenderShader(g_Device->GetD3DDeviceContext());
+
+	g_Model->RenderModel(g_Device->GetD3DDeviceContext());
+
 	g_Device->Present();
 }
 
@@ -203,4 +223,6 @@ void CleanupDevice() {
 	auto context = g_Device->GetD3DDeviceContext();
 	context->ClearState();
 
+	g_Model.reset();
+	g_Shader.reset();
 }

@@ -8,11 +8,13 @@ class Device {
 
 public:
 	Device(DXGI_FORMAT backBufferFormat = DXGI_FORMAT_R8G8B8A8_UNORM, UINT backBufferCount = 2, D3D_FEATURE_LEVEL minFeatureLevel = D3D_FEATURE_LEVEL_10_0, bool vSync = true);
-	
+	~Device() = default;
+
 	void SetWindow(HWND, int, int);
 	HRESULT CreateDevice();
 	void Present();
 	
+	ID3D11Device* GetD3DDevice() const { return m_D3DDevice.Get(); }
 	ID3D11DeviceContext* GetD3DDeviceContext() const { return m_D3DDeviceContext.Get(); }
 	ID3D11RenderTargetView* GetRenderTargetView() const { return m_RenderTargetView.Get(); }
 	D3D11_VIEWPORT GetScreenViewport() const { return m_ScreenViewport; }
