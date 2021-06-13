@@ -1,7 +1,14 @@
 
+//#define CompileShader	// require d3dcompiler.lib
+
 #include <d3dcompiler.h>
 #include "Shader.h"
 
+#ifndef CompileShader
+#include "ReadData.h"
+#endif // !CompileShader
+
+#ifdef CompileShader
 
 namespace
 {
@@ -38,6 +45,7 @@ namespace
 	}
 }
 
+#endif // CompileShader
 
 //--------------------------------------------------------------------------------------
 Shader::Shader()
@@ -52,6 +60,45 @@ Shader::Shader()
 HRESULT Shader::CreateShader(ID3D11Device* const device) {
 
 	HRESULT hr = S_OK;
+
+#ifndef CompileShader
+
+	// Load the vertex shader
+	auto vertexShaderBlob = DX::ReadData(L"Data\\TutorialVS.cso");
+	
+	// Create the vertex shader
+	hr = device->CreateVertexShader(vertexShaderBlob.data(), vertexShaderBlob.size(), nullptr, m_VertexShader.ReleaseAndGetAddressOf());
+	if (FAILED(hr)) {
+		vertexShaderBlob.clear();
+		return hr;
+	}
+
+	// Define the input layout
+	D3D11_INPUT_ELEMENT_DESC layout[] =
+	{
+		{"POSITION",0,DXGI_FORMAT_R32G32B32_FLOAT,0,0,D3D11_INPUT_PER_VERTEX_DATA,0},
+	};
+
+	// Create the input layout
+	hr = device->CreateInputLayout(layout, ARRAYSIZE(layout), vertexShaderBlob.data(), vertexShaderBlob.size(), m_VertexLayout.ReleaseAndGetAddressOf());
+	vertexShaderBlob.clear();
+	if (FAILED(hr)) {
+		return hr;
+	}
+
+	// Load the pixel shader
+	auto pixelShaderBlob = DX::ReadData(L"Data\\TutorialPS.cso");
+
+	// Create the pixel shader
+	hr = device->CreatePixelShader(pixelShaderBlob.data(), pixelShaderBlob.size(), nullptr, m_PixelShader.ReleaseAndGetAddressOf());
+	pixelShaderBlob.clear();
+	if (FAILED(hr)) {
+		return hr;
+	}
+
+#endif // !CompileShader
+
+#ifdef CompileShader
 
 	// Compile the vertex shader
 	Microsoft::WRL::ComPtr<ID3DBlob> vsBlob = nullptr;
@@ -73,10 +120,9 @@ HRESULT Shader::CreateShader(ID3D11Device* const device) {
 	{
 		{"POSITION",0,DXGI_FORMAT_R32G32B32_FLOAT,0,0,D3D11_INPUT_PER_VERTEX_DATA,0},
 	};
-	UINT numElements = ARRAYSIZE(layout);
 
 	// Create the input layout
-	hr = device->CreateInputLayout(layout, numElements, vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(), m_VertexLayout.ReleaseAndGetAddressOf());
+	hr = device->CreateInputLayout(layout, ARRAYSIZE(layout), vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(), m_VertexLayout.ReleaseAndGetAddressOf());
 	vsBlob.Reset();
 	if (FAILED(hr)) {
 		return hr;
@@ -96,6 +142,10 @@ HRESULT Shader::CreateShader(ID3D11Device* const device) {
 	if (FAILED(hr)) {
 		return hr;
 	}
+
+#endif // CompileShader
+
+	return S_OK;
 }
 
 

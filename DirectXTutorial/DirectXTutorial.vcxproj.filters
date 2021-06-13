@@ -16,8 +16,13 @@
     <ClInclude Include="Device.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="Model.h" />
+    <ClInclude Include="ReadData.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Tutorial.hlsli" />
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="TutorialVS.hlsl" />
+    <FxCompile Include="TutorialPS.hlsl" />
   </ItemGroup>
 </Project>
