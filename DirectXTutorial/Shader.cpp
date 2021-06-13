@@ -47,11 +47,26 @@ namespace
 
 #endif // CompileShader
 
+using namespace DirectX;
+
+namespace
+{
+	struct ConstantBuffer
+	{
+		XMMATRIX mWorld;
+		XMMATRIX mView;
+		XMMATRIX mProjection;
+	};
+	static_assert((sizeof(ConstantBuffer) % 16) == 0, "Constant buffer must always be 16-byte aligned");
+}
+
+
 //--------------------------------------------------------------------------------------
 Shader::Shader()
 	:m_VertexShader(nullptr)
 	,m_PixelShader(nullptr)
 	,m_VertexLayout(nullptr)
+	,m_ConstantBuffer(nullptr)
 {
 }
 
@@ -148,18 +163,37 @@ HRESULT Shader::CreateShader(ID3D11Device* const device) {
 
 #endif // CompileShader
 
+	// Create the constant buffer
+	D3D11_BUFFER_DESC bd = {};
+	bd.Usage = D3D11_USAGE_DEFAULT;
+	bd.ByteWidth = sizeof(ConstantBuffer);
+	bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	bd.CPUAccessFlags = 0;
+	hr = device->CreateBuffer(&bd, nullptr, m_ConstantBuffer.ReleaseAndGetAddressOf());
+	if (FAILED(hr)) {
+		return hr;
+	}
+
 	return S_OK;
 }
 
 
 //--------------------------------------------------------------------------------------
-void Shader::SetRenderShader(ID3D11DeviceContext* const context) {
+void Shader::SetRenderShader(ID3D11DeviceContext* const context, XMMATRIX& world, XMMATRIX& view, XMMATRIX& projection) {
+
+	// Update variables
+	ConstantBuffer cb = {};
+	cb.mWorld = DirectX::XMMatrixTranspose(world);
+	cb.mView = DirectX::XMMatrixTranspose(view);
+	cb.mProjection = DirectX::XMMatrixTranspose(projection);
+	context->UpdateSubresource(m_ConstantBuffer.Get(), 0, nullptr, &cb, 0, 0);
 
 	// Set the input layout
 	context->IASetInputLayout(m_VertexLayout.Get());
 
 	// Set Vertex & Pixel Shader
 	context->VSSetShader(m_VertexShader.Get(), nullptr, 0);
+	context->VSSetConstantBuffers(0, 1, m_ConstantBuffer.GetAddressOf());
 	context->PSSetShader(m_PixelShader.Get(), nullptr, 0);
 
 }

@@ -51,6 +51,7 @@ namespace
 Model::Model()
 	:m_VertexBuffer(nullptr)
 	,m_IndexBuffer(nullptr)
+	,m_World(XMMatrixIdentity())
 {
 }
 
@@ -86,6 +87,18 @@ HRESULT Model::CreateModel(ID3D11Device* const device) {
 	}
 
 	return S_OK;
+}
+
+
+//--------------------------------------------------------------------------------------
+void Model::MoveModel(_In_opt_ std::function<XMMATRIX()> customFunction) {
+
+	if (customFunction) {
+		m_World = customFunction();
+	}
+	else {
+		m_World = XMMatrixIdentity();
+	}
 }
 
 
