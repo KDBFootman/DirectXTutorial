@@ -7,7 +7,7 @@
 class Device {
 
 public:
-	Device(DXGI_FORMAT backBufferFormat = DXGI_FORMAT_R8G8B8A8_UNORM, UINT backBufferCount = 2, D3D_FEATURE_LEVEL minFeatureLevel = D3D_FEATURE_LEVEL_10_0, bool vSync = true);
+	Device(DXGI_FORMAT backBufferFormat = DXGI_FORMAT_R8G8B8A8_UNORM, UINT backBufferCount = 2, DXGI_FORMAT depthBufferFormat = DXGI_FORMAT_D32_FLOAT, D3D_FEATURE_LEVEL minFeatureLevel = D3D_FEATURE_LEVEL_10_0, bool vSync = true);
 	~Device() = default;
 
 	void SetWindow(HWND, int, int);
@@ -18,6 +18,7 @@ public:
 	ID3D11Device* GetD3DDevice() const { return m_D3DDevice.Get(); }
 	ID3D11DeviceContext* GetD3DDeviceContext() const { return m_D3DDeviceContext.Get(); }
 	ID3D11RenderTargetView* GetRenderTargetView() const { return m_RenderTargetView.Get(); }
+	ID3D11DepthStencilView* GetDepthStencilView() const { return m_DepthStencilView.Get(); }
 	D3D11_VIEWPORT GetScreenViewport() const { return m_ScreenViewport; }
 	
 
@@ -28,10 +29,13 @@ private:
 	Microsoft::WRL::ComPtr<ID3D11DeviceContext>		m_D3DDeviceContext;
 	Microsoft::WRL::ComPtr<IDXGISwapChain>			m_SwapChain;
 	Microsoft::WRL::ComPtr<ID3D11RenderTargetView>	m_RenderTargetView;
+	Microsoft::WRL::ComPtr<ID3D11Texture2D>			m_DepthStencil;
+	Microsoft::WRL::ComPtr<ID3D11DepthStencilView>	m_DepthStencilView;
 	D3D11_VIEWPORT									m_ScreenViewport;
 
 	DXGI_FORMAT										m_BackBufferFormat;
 	UINT											m_BackBufferCount;
+	DXGI_FORMAT										m_DepthBufferFormat;
 	D3D_FEATURE_LEVEL								m_MinFeatureLevel;
 
 	HWND											m_hWnd;

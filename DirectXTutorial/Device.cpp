@@ -3,16 +3,19 @@
 
 
 //--------------------------------------------------------------------------------------
-Device::Device(DXGI_FORMAT backBufferFormat,UINT backBufferCount,D3D_FEATURE_LEVEL minFeatureLevel, bool vSync)
+Device::Device(DXGI_FORMAT backBufferFormat, UINT backBufferCount, DXGI_FORMAT depthBufferFormat, D3D_FEATURE_LEVEL minFeatureLevel, bool vSync)
 	:m_DriverType(D3D_DRIVER_TYPE_NULL)
 	,m_FeatureLevel(D3D_FEATURE_LEVEL_9_1)
 	,m_D3DDevice(nullptr)
 	,m_D3DDeviceContext(nullptr)
 	,m_SwapChain(nullptr)
 	,m_RenderTargetView(nullptr)
+	,m_DepthStencil(nullptr)
+	,m_DepthStencilView(nullptr)
 	,m_ScreenViewport{0.0f,0.0f,1.0f,1.0f}
 	,m_BackBufferFormat(backBufferFormat)
 	,m_BackBufferCount(backBufferCount)
+	,m_DepthBufferFormat(depthBufferFormat)
 	,m_MinFeatureLevel(minFeatureLevel)
 	,m_hWnd(nullptr)
 	,m_VSync(vSync)
@@ -102,6 +105,34 @@ HRESULT Device::CreateDevice() {
 
 	hr = m_D3DDevice->CreateRenderTargetView(pBackBuffer.Get(), nullptr, m_RenderTargetView.ReleaseAndGetAddressOf());
 	pBackBuffer.Reset();
+	if (FAILED(hr)) {
+		return hr;
+	}
+
+	// Create depth stencil texture
+	D3D11_TEXTURE2D_DESC descDepth = {};
+	descDepth.Width = static_cast<UINT>(m_ScreenViewport.Width);
+	descDepth.Height = static_cast<UINT>(m_ScreenViewport.Height);
+	descDepth.MipLevels = 1;
+	descDepth.ArraySize = 1;
+	descDepth.Format = m_DepthBufferFormat;
+	descDepth.SampleDesc.Count = 1;
+	descDepth.SampleDesc.Quality = 0;
+	descDepth.Usage = D3D11_USAGE_DEFAULT;
+	descDepth.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+	descDepth.CPUAccessFlags = 0;
+	descDepth.MiscFlags = 0;
+	hr = m_D3DDevice->CreateTexture2D(&descDepth, nullptr, m_DepthStencil.ReleaseAndGetAddressOf());
+	if (FAILED(hr)) {
+		return hr;
+	}
+
+	// Create depth stencil view
+	D3D11_DEPTH_STENCIL_VIEW_DESC descDSV = {};
+	descDSV.Format = descDepth.Format;
+	descDSV.Texture2D.MipSlice = 0;
+	descDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+	hr = m_D3DDevice->CreateDepthStencilView(m_DepthStencil.Get(), &descDSV, m_DepthStencilView.ReleaseAndGetAddressOf());
 	if (FAILED(hr)) {
 		return hr;
 	}
